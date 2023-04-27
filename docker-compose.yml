@@ -1,0 +1,18 @@
+version: '3.6'
+services:
+  postgres:
+    image: postgres:13.10-alpine
+    restart: always
+    volumes:
+    - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: postgrespassword
+    deploy:
+      resources:
+        limits:
+          cpus: 100m
+          memory: 300m
+    ports:
+      - 5432:5432
+volumes:
+  db_data:
