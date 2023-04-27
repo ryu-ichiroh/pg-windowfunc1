@@ -20,6 +20,7 @@ book_authors = Table(
     Base.metadata,
     Column("book_id", ForeignKey("books.book_id")),
     Column("author_id", ForeignKey("authors.author_id")),
+    Column("position", Integer),
 )
 
 class Author(Base):
@@ -31,7 +32,7 @@ class Book(Base):
     __tablename__ = "books"
     book_id = Column(UUID, primary_key=True)
     title = Column(Text)
-    authors: Mapped[list[Author]] = relationship(secondary=book_authors, lazy="")
+    authors: Mapped[list[Author]] = relationship(secondary=book_authors, order_by=book_authors.c.position, lazy="selectin")
 
 SessionClass = sessionmaker(engine)
 session = SessionClass()
