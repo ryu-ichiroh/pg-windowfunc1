@@ -145,3 +145,39 @@ where
 --                  Index Cond: (author_id = authors.author_id)
 -- (13 rows)
 
+
+-- authorsをバッチ取得 - パターン3
+-- 今のところベスト
+select
+  authors.author_id,
+  authors.name,
+  array_agg(
+      array[book_authors.book_id::text, book_authors.position::text]
+   ) as book_ids
+from 
+  authors
+  join book_authors using (author_id)
+where
+      book_authors.book_id in ('1FB112D1-54C9-4308-99C6-0163BFD0172D', '554BC347-F36C-4766-B66F-D651C84C56BA')
+group by authors.author_id, authors.name;
+
+-- 結果
+--               author_id               | name  |                                      book_ids
+-- --------------------------------------+-------+-------------------------------------------------------------------------------------
+--  467021fd-ae39-4ba0-bc7b-3e5b21ef69f9 | 著者2 | {{1fb112d1-54c9-4308-99c6-0163bfd0172d,2}}
+--  f66c5c85-5044-4433-b631-c01c64a7a4f6 | 著者3 | {{554bc347-f36c-4766-b66f-d651c84c56ba,2}}
+--  bed827ff-6847-41bd-88a0-b77fdd74bea3 | 著者1 | {{1fb112d1-54c9-4308-99c6-0163bfd0172d,1},{554bc347-f36c-4766-b66f-d651c84c56ba,1}}
+-- (3 rows)
+
+-- 実行計画
+--                                                             QUERY PLAN
+-- -----------------------------------------------------------------------------------------------------------------------------------
+--  HashAggregate  (cost=45.32..46.57 rows=100 width=80)
+--    Group Key: authors.author_id
+--    ->  Nested Loop  (cost=0.32..43.82 rows=100 width=68)
+--          ->  Index Scan using book_authors_pkey on book_authors  (cost=0.16..14.07 rows=100 width=36)
+--                Index Cond: (book_id = ANY ('{1fb112d1-54c9-4308-99c6-0163bfd0172d,554bc347-f36c-4766-b66f-d651c84c56ba}'::uuid[]))
+--          ->  Index Scan using authors_pkey on authors  (cost=0.16..0.30 rows=1 width=48)
+--                Index Cond: (author_id = book_authors.author_id)
+-- (7 rows)
+
